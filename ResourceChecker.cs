@@ -24,26 +24,26 @@ public class TextureDetails
 	public List<Object> FoundInScripts = new List<Object>();
 	public TextureDetails()
 	{
-		
+
 	}
 };
 
 public class MaterialDetails
 {
-	
+
 	public Material material;
 
 	public List<Renderer> FoundInRenderers=new List<Renderer>();
 
 	public MaterialDetails()
 	{
-		
+
 	}
 };
 
 public class MeshDetails
 {
-	
+
 	public Mesh mesh;
 
 	public List<MeshFilter> FoundInMeshFilters=new List<MeshFilter>();
@@ -51,15 +51,15 @@ public class MeshDetails
 
 	public MeshDetails()
 	{
-		
+
 	}
 };
 
 public class ResourceChecker : EditorWindow {
-	
-	
+
+
 	string[] inspectToolbarStrings = {"Textures", "Materials","Meshes"};
-	
+
 	enum InspectType 
 	{
 		Textures,Materials,Meshes
@@ -68,40 +68,42 @@ public class ResourceChecker : EditorWindow {
 	bool IncludeDisabledObjects=false;
 	bool IncludeSpriteAnimations=true;
 	bool IncludeScriptReferences=true;
-	
+	bool IncludeNGUITextures=true;
+
 	InspectType ActiveInspectType=InspectType.Textures;
-	
+
 	float ThumbnailWidth=40;
 	float ThumbnailHeight=40;
-	
+
 	List<TextureDetails> ActiveTextures=new List<TextureDetails>();
 	List<MaterialDetails> ActiveMaterials=new List<MaterialDetails>();
 	List<MeshDetails> ActiveMeshDetails=new List<MeshDetails>();
-	
+
 	Vector2 textureListScrollPos=new Vector2(0,0);
 	Vector2 materialListScrollPos=new Vector2(0,0);
 	Vector2 meshListScrollPos=new Vector2(0,0);
-	
+
 	int TotalTextureMemory=0;
 	int TotalMeshVertices=0;
-	
+
 	bool ctrlPressed=false;
-	
+
 	static int MinWidth=455;
-    
-    [MenuItem ("Window/Resource Checker")]
-    static void Init ()
+
+	[MenuItem ("Window/Resource Checker")]
+	static void Init ()
 	{  
-        ResourceChecker window = (ResourceChecker) EditorWindow.GetWindow (typeof (ResourceChecker));
+		ResourceChecker window = (ResourceChecker) EditorWindow.GetWindow (typeof (ResourceChecker));
 		window.CheckResources();
 		window.minSize=new Vector2(MinWidth,300);
-    }
-    
-    void OnGUI ()
+	}
+
+	void OnGUI ()
 	{
 		IncludeDisabledObjects = GUILayout.Toggle(IncludeDisabledObjects, "Include disabled and internal objects");
 		IncludeSpriteAnimations = GUILayout.Toggle(IncludeSpriteAnimations, "Look in sprite animations");
 		IncludeScriptReferences = GUILayout.Toggle(IncludeScriptReferences, "Look in behavior fields");
+		IncludeNGUITextures = GUILayout.Toggle(IncludeScriptReferences, "Include NGUI textures/sprites");
 		if (GUILayout.Button("Refresh")) CheckResources();
 		GUILayout.BeginHorizontal();
 		GUILayout.Label("Materials "+ActiveMaterials.Count);
@@ -109,48 +111,48 @@ public class ResourceChecker : EditorWindow {
 		GUILayout.Label("Meshes "+ActiveMeshDetails.Count+" - "+TotalMeshVertices+" verts");
 		GUILayout.EndHorizontal();
 		ActiveInspectType=(InspectType)GUILayout.Toolbar((int)ActiveInspectType,inspectToolbarStrings);
-		
+
 		ctrlPressed=Event.current.control || Event.current.command;
-		
+
 		switch (ActiveInspectType)
 		{
-			case InspectType.Textures:
-				ListTextures();
-				break;
-			case InspectType.Materials:
-				ListMaterials();
-				break;
-			case InspectType.Meshes:
-				ListMeshes();
-				break;	
-			
-			
+		case InspectType.Textures:
+			ListTextures();
+			break;
+		case InspectType.Materials:
+			ListMaterials();
+			break;
+		case InspectType.Meshes:
+			ListMeshes();
+			break;	
+
+
 		}
 	}
-	
-	
+
+
 	int GetBitsPerPixel(TextureFormat format)
 	{
 		switch (format)
 		{
-			case TextureFormat.Alpha8: //	 Alpha-only texture format.
-				return 8;
-			case TextureFormat.ARGB4444: //	 A 16 bits/pixel texture format. Texture stores color with an alpha channel.
-				return 16;
-			case TextureFormat.RGBA4444: //	 A 16 bits/pixel texture format.
-				return 16;
-			case TextureFormat.RGB24:	// A color texture format.
-				return 24;
-			case TextureFormat.RGBA32:	//Color with an alpha channel texture format.
-				return 32;
-			case TextureFormat.ARGB32:	//Color with an alpha channel texture format.
-				return 32;
-			case TextureFormat.RGB565:	//	 A 16 bit color texture format.
-				return 16;
-			case TextureFormat.DXT1:	// Compressed color texture format.
-				return 4;
-			case TextureFormat.DXT5:	// Compressed color with alpha channel texture format.
-				return 8;
+		case TextureFormat.Alpha8: //	 Alpha-only texture format.
+			return 8;
+		case TextureFormat.ARGB4444: //	 A 16 bits/pixel texture format. Texture stores color with an alpha channel.
+			return 16;
+		case TextureFormat.RGBA4444: //	 A 16 bits/pixel texture format.
+			return 16;
+		case TextureFormat.RGB24:	// A color texture format.
+			return 24;
+		case TextureFormat.RGBA32:	//Color with an alpha channel texture format.
+			return 32;
+		case TextureFormat.ARGB32:	//Color with an alpha channel texture format.
+			return 32;
+		case TextureFormat.RGB565:	//	 A 16 bit color texture format.
+			return 16;
+		case TextureFormat.DXT1:	// Compressed color texture format.
+			return 4;
+		case TextureFormat.DXT5:	// Compressed color with alpha channel texture format.
+			return 8;
 			/*
 			case TextureFormat.WiiI4:	// Wii texture format.
 			case TextureFormat.WiiI8:	// Wii texture format. Intensity 8 bit.
@@ -162,41 +164,41 @@ public class ResourceChecker : EditorWindow {
 			case TextureFormat.WiiCMPR:	//	 Compressed Wii texture format. 4 bits/texel, ~RGB8A1 (Outline alpha is not currently supported).
 				return 0;  //Not supported yet
 			*/
-			case TextureFormat.PVRTC_RGB2://	 PowerVR (iOS) 2 bits/pixel compressed color texture format.
-				return 2;
-			case TextureFormat.PVRTC_RGBA2://	 PowerVR (iOS) 2 bits/pixel compressed with alpha channel texture format
-				return 2;
-			case TextureFormat.PVRTC_RGB4://	 PowerVR (iOS) 4 bits/pixel compressed color texture format.
-				return 4;
-			case TextureFormat.PVRTC_RGBA4://	 PowerVR (iOS) 4 bits/pixel compressed with alpha channel texture format
-				return 4;
-			case TextureFormat.ETC_RGB4://	 ETC (GLES2.0) 4 bits/pixel compressed RGB texture format.
-				return 4;
-			case TextureFormat.ATC_RGB4://	 ATC (ATITC) 4 bits/pixel compressed RGB texture format.
-				return 4;
-			case TextureFormat.ATC_RGBA8://	 ATC (ATITC) 8 bits/pixel compressed RGB texture format.
-				return 8;
-			case TextureFormat.BGRA32://	 Format returned by iPhone camera
-				return 32;
-#if !UNITY_5
+		case TextureFormat.PVRTC_RGB2://	 PowerVR (iOS) 2 bits/pixel compressed color texture format.
+			return 2;
+		case TextureFormat.PVRTC_RGBA2://	 PowerVR (iOS) 2 bits/pixel compressed with alpha channel texture format
+			return 2;
+		case TextureFormat.PVRTC_RGB4://	 PowerVR (iOS) 4 bits/pixel compressed color texture format.
+			return 4;
+		case TextureFormat.PVRTC_RGBA4://	 PowerVR (iOS) 4 bits/pixel compressed with alpha channel texture format
+			return 4;
+		case TextureFormat.ETC_RGB4://	 ETC (GLES2.0) 4 bits/pixel compressed RGB texture format.
+			return 4;
+		case TextureFormat.ATC_RGB4://	 ATC (ATITC) 4 bits/pixel compressed RGB texture format.
+			return 4;
+		case TextureFormat.ATC_RGBA8://	 ATC (ATITC) 8 bits/pixel compressed RGB texture format.
+			return 8;
+		case TextureFormat.BGRA32://	 Format returned by iPhone camera
+			return 32;
+			#if !UNITY_5
 			case TextureFormat.ATF_RGB_DXT1://	 Flash-specific RGB DXT1 compressed color texture format.
 			case TextureFormat.ATF_RGBA_JPG://	 Flash-specific RGBA JPG-compressed color texture format.
 			case TextureFormat.ATF_RGB_JPG://	 Flash-specific RGB JPG-compressed color texture format.
-				return 0; //Not supported yet  
-#endif
+			return 0; //Not supported yet  
+			#endif
 		}
 		return 0;
 	}
-	
+
 	int CalculateTextureSizeBytes(Texture tTexture)
 	{
-		
+
 		int tWidth=tTexture.width;
 		int tHeight=tTexture.height;
 		if (tTexture is Texture2D)
 		{
 			Texture2D tTex2D=tTexture as Texture2D;
-		 	int bitsPerPixel=GetBitsPerPixel(tTex2D.format);
+			int bitsPerPixel=GetBitsPerPixel(tTex2D.format);
 			int mipMapCount=tTex2D.mipmapCount;
 			int mipLevel=1;
 			int tSize=0;
@@ -209,17 +211,17 @@ public class ResourceChecker : EditorWindow {
 			}
 			return tSize;
 		}
-		
+
 		if (tTexture is Cubemap)
 		{
 			Cubemap tCubemap=tTexture as Cubemap;
-		 	int bitsPerPixel=GetBitsPerPixel(tCubemap.format);
+			int bitsPerPixel=GetBitsPerPixel(tCubemap.format);
 			return tWidth*tHeight*6*bitsPerPixel/8;
 		}
 		return 0;
 	}
-	
-	
+
+
 	void SelectObject(Object selectedObject,bool append)
 	{
 		if (append)
@@ -228,12 +230,12 @@ public class ResourceChecker : EditorWindow {
 			// Allow toggle selection
 			if (currentSelection.Contains(selectedObject)) currentSelection.Remove(selectedObject);
 			else currentSelection.Add(selectedObject);
-			
+
 			Selection.objects=currentSelection.ToArray();
 		}
 		else Selection.activeObject=selectedObject;
 	}
-	
+
 	void SelectObjects(List<Object> selectedObjects,bool append)
 	{
 		if (append)
@@ -244,50 +246,50 @@ public class ResourceChecker : EditorWindow {
 		}
 		else Selection.objects=selectedObjects.ToArray();
 	}
-	
+
 	void ListTextures()
 	{
 		textureListScrollPos = EditorGUILayout.BeginScrollView(textureListScrollPos);
-		
+
 		foreach (TextureDetails tDetails in ActiveTextures)
 		{			
-			
+
 			GUILayout.BeginHorizontal ();
 			GUILayout.Box(tDetails.texture, GUILayout.Width(ThumbnailWidth), GUILayout.Height(ThumbnailHeight));
-			
+
 			if(GUILayout.Button(tDetails.texture.name,GUILayout.Width(150)))
 			{
 				SelectObject(tDetails.texture,ctrlPressed);
 			}
-			
+
 			string sizeLabel=""+tDetails.texture.width+"x"+tDetails.texture.height;
 			if (tDetails.isCubeMap) sizeLabel+="x6";
 			sizeLabel+=" - "+tDetails.mipMapCount+"mip";
 			sizeLabel+="\n"+FormatSizeString(tDetails.memSizeKB)+" - "+tDetails.format+"";
-			
+
 			GUILayout.Label (sizeLabel,GUILayout.Width(120));
-					
+
 			if(GUILayout.Button(tDetails.FoundInMaterials.Count+" Mat",GUILayout.Width(50)))
 			{
 				SelectObjects(tDetails.FoundInMaterials,ctrlPressed);
 			}
 
 			HashSet<Object> FoundObjects = new HashSet<Object>();
-			foreach (Renderer renderer in tDetails.FoundInRenderers) FoundObjects.Add(renderer.gameObject);
-			foreach (Animator animator in tDetails.FoundInAnimators) FoundObjects.Add(animator.gameObject);
-			foreach (MonoBehaviour script in tDetails.FoundInScripts) FoundObjects.Add(script.gameObject);
+			foreach (Renderer renderer in tDetails.FoundInRenderers) if (renderer != null) FoundObjects.Add(renderer.gameObject);
+			foreach (Animator animator in tDetails.FoundInAnimators) if (animator != null) FoundObjects.Add(animator.gameObject);
+			foreach (MonoBehaviour script in tDetails.FoundInScripts) if (script != null) FoundObjects.Add(script.gameObject);
 			if (GUILayout.Button(FoundObjects.Count+" GO",GUILayout.Width(50)))
 			{
 				SelectObjects(new List<Object>(FoundObjects),ctrlPressed);
 			}
-			
+
 			GUILayout.EndHorizontal();	
 		}
 		if (ActiveTextures.Count>0)
 		{
 			GUILayout.BeginHorizontal ();
 			GUILayout.Box(" ",GUILayout.Width(ThumbnailWidth),GUILayout.Height(ThumbnailHeight));
-			
+
 			if(GUILayout.Button("Select All",GUILayout.Width(150)))
 			{
 				List<Object> AllTextures=new List<Object>();
@@ -297,29 +299,29 @@ public class ResourceChecker : EditorWindow {
 			EditorGUILayout.EndHorizontal();
 		}
 		EditorGUILayout.EndScrollView();
-    }
-	
+	}
+
 	void ListMaterials()
 	{
 		materialListScrollPos = EditorGUILayout.BeginScrollView(materialListScrollPos);
-		
+
 		foreach (MaterialDetails tDetails in ActiveMaterials)
 		{			
 			if (tDetails.material!=null)
 			{
 				GUILayout.BeginHorizontal ();
-				
+
 				if (tDetails.material.mainTexture!=null) GUILayout.Box(tDetails.material.mainTexture, GUILayout.Width(ThumbnailWidth), GUILayout.Height(ThumbnailHeight));
 				else	
 				{
 					GUILayout.Box("n/a",GUILayout.Width(ThumbnailWidth),GUILayout.Height(ThumbnailHeight));
 				}
-				
+
 				if(GUILayout.Button(tDetails.material.name,GUILayout.Width(150)))
 				{
 					SelectObject(tDetails.material,ctrlPressed);
 				}
-				
+
 				string shaderLabel = tDetails.material.shader != null ? tDetails.material.shader.name : "no shader";
 				GUILayout.Label (shaderLabel, GUILayout.Width(200));
 
@@ -329,18 +331,18 @@ public class ResourceChecker : EditorWindow {
 					foreach (Renderer renderer in tDetails.FoundInRenderers) FoundObjects.Add(renderer.gameObject);
 					SelectObjects(FoundObjects,ctrlPressed);
 				}
-				
-				
+
+
 				GUILayout.EndHorizontal();	
 			}
 		}
 		EditorGUILayout.EndScrollView();		
-    }
-	
+	}
+
 	void ListMeshes()
 	{
 		meshListScrollPos = EditorGUILayout.BeginScrollView(meshListScrollPos);
-		
+
 		foreach (MeshDetails tDetails in ActiveMeshDetails)
 		{			
 			if (tDetails.mesh!=null)
@@ -353,37 +355,37 @@ public class ResourceChecker : EditorWindow {
 					GUILayout.Box("n/a",GUILayout.Width(ThumbnailWidth),GUILayout.Height(ThumbnailHeight));
 				}
 				*/
-				
+
 				if(GUILayout.Button(tDetails.mesh.name,GUILayout.Width(150)))
 				{
 					SelectObject(tDetails.mesh,ctrlPressed);
 				}
 				string sizeLabel=""+tDetails.mesh.vertexCount+" vert";
-				
+
 				GUILayout.Label (sizeLabel,GUILayout.Width(100));
-				
-				
+
+
 				if(GUILayout.Button(tDetails.FoundInMeshFilters.Count + " GO",GUILayout.Width(50)))
 				{
 					List<Object> FoundObjects=new List<Object>();
 					foreach (MeshFilter meshFilter in tDetails.FoundInMeshFilters) FoundObjects.Add(meshFilter.gameObject);
 					SelectObjects(FoundObjects,ctrlPressed);
 				}
-				
+
 				if(GUILayout.Button(tDetails.FoundInSkinnedMeshRenderer.Count + " GO",GUILayout.Width(50)))
 				{
 					List<Object> FoundObjects=new List<Object>();
 					foreach (SkinnedMeshRenderer skinnedMeshRenderer in tDetails.FoundInSkinnedMeshRenderer) FoundObjects.Add(skinnedMeshRenderer.gameObject);
 					SelectObjects(FoundObjects,ctrlPressed);
 				}
-				
-				
+
+
 				GUILayout.EndHorizontal();	
 			}
 		}
 		EditorGUILayout.EndScrollView();		
-    }
-	
+	}
+
 	string FormatSizeString(int memSizeKB)
 	{
 		if (memSizeKB<1024) return ""+memSizeKB+"k";
@@ -393,8 +395,8 @@ public class ResourceChecker : EditorWindow {
 			return memSizeMB.ToString("0.00")+"Mb";
 		}
 	}
-	
-	
+
+
 	TextureDetails FindTextureDetails(Texture tTexture)
 	{
 		foreach (TextureDetails tTextureDetails in ActiveTextures)
@@ -402,9 +404,9 @@ public class ResourceChecker : EditorWindow {
 			if (tTextureDetails.texture==tTexture) return tTextureDetails;
 		}
 		return null;
-		
+
 	}
-	
+
 	MaterialDetails FindMaterialDetails(Material tMaterial)
 	{
 		foreach (MaterialDetails tMaterialDetails in ActiveMaterials)
@@ -412,9 +414,9 @@ public class ResourceChecker : EditorWindow {
 			if (tMaterialDetails.material==tMaterial) return tMaterialDetails;
 		}
 		return null;
-		
+
 	}
-	
+
 	MeshDetails FindMeshDetails(Mesh tMesh)
 	{
 		foreach (MeshDetails tMeshDetails in ActiveMeshDetails)
@@ -422,7 +424,7 @@ public class ResourceChecker : EditorWindow {
 			if (tMeshDetails.mesh==tMesh) return tMeshDetails;
 		}
 		return null;
-		
+
 	}
 
 
@@ -533,31 +535,31 @@ public class ResourceChecker : EditorWindow {
 			Animator[] animators = FindObjects<Animator>();
 			foreach (Animator anim in animators)
 			{
-#if UNITY_4_6 || UNITY_4_5 || UNITY_4_4 || UNITY_4_3
+				#if UNITY_4_6 || UNITY_4_5 || UNITY_4_4 || UNITY_4_3
 				UnityEditorInternal.AnimatorController ac = anim.runtimeAnimatorController as UnityEditorInternal.AnimatorController;
-#elif UNITY_5
-                UnityEditor.Animations.AnimatorController ac = anim.runtimeAnimatorController as UnityEditor.Animations.AnimatorController;
-#endif
+				#elif UNITY_5
+				UnityEditor.Animations.AnimatorController ac = anim.runtimeAnimatorController as UnityEditor.Animations.AnimatorController;
+				#endif
 
 				for (int x = 0; x < anim.layerCount; x++)
 				{
-#if UNITY_4_6 || UNITY_4_5 || UNITY_4_4 || UNITY_4_3
+					#if UNITY_4_6 || UNITY_4_5 || UNITY_4_4 || UNITY_4_3
 					UnityEditorInternal.StateMachine sm = ac.GetLayer(x).stateMachine;
 					int cnt = sm.stateCount;
-#elif UNITY_5
-                    UnityEditor.Animations.AnimatorStateMachine sm = ac.layers[x].stateMachine;
-                    int cnt = sm.states.Length;
-#endif
+					#elif UNITY_5
+					UnityEditor.Animations.AnimatorStateMachine sm = ac.layers[x].stateMachine;
+					int cnt = sm.states.Length;
+					#endif
 
 					for (int i = 0; i < cnt; i++)
 					{
-#if UNITY_4_6 || UNITY_4_5 || UNITY_4_4 || UNITY_4_3
+						#if UNITY_4_6 || UNITY_4_5 || UNITY_4_4 || UNITY_4_3
 						UnityEditorInternal.State state = sm.GetState(i);
 						Motion m = state.GetMotion();
-#elif UNITY_5
-                        UnityEditor.Animations.AnimatorState state = sm.states[i].state;
-                        Motion m = state.motion;
-#endif
+						#elif UNITY_5
+						UnityEditor.Animations.AnimatorState state = sm.states[i].state;
+						Motion m = state.motion;
+						#endif
 						if (m != null)
 						{
 							AnimationClip clip = m as AnimationClip;
@@ -587,6 +589,23 @@ public class ResourceChecker : EditorWindow {
 					}
 				}
 
+			}
+		}
+
+		if (IncludeNGUITextures)
+		{
+			UITexture[] nguiTextures = FindObjects<UITexture>();
+			foreach (UITexture texture in nguiTextures) {
+				var tTextureDetail = GetTextureDetail(texture.mainTexture);
+				if (!ActiveTextures.Contains(tTextureDetail))
+					ActiveTextures.Add(tTextureDetail);
+			}
+
+			UISprite[] nguiSprites = FindObjects<UISprite>();
+			foreach (UISprite sprite in nguiSprites) {
+				var tTextureDetail = GetTextureDetail(sprite.mainTexture);
+				if (!ActiveTextures.Contains(tTextureDetail))
+					ActiveTextures.Add(tTextureDetail);
 			}
 		}
 
@@ -708,5 +727,5 @@ public class ResourceChecker : EditorWindow {
 
 		return tTextureDetails;
 	}
-	
+
 }
